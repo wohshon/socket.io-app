@@ -1,0 +1,167 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('app:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '8080');
+app.set('port', port);
+
+
+/**
+ * Socket io
+ * 
+ */
+
+
+var clientList = [];
+
+ var socketUtil = {
+    clients : new Map(),
+
+    onConnect: function(client) {
+      console.log("adding client "+client.id+ " ");
+      this.clients.set(client.id, client);
+      clientList.push(client.id);
+      console.log("adding clientList "+clientList.length);
+      console.log("users connected "+this.clients.size);
+      client.emit("CLIENTID",client.id);
+      socket.emit("CLIENT_ADD",clientList);
+    },
+    onDisconnect(client) {
+      console.log("user disconnected "+client.id);
+      this.clients.delete(client.id);
+      clientList.splice(clientList.indexOf(client.id));
+      console.log("users connected "+this.clients.size);
+      console.log("clientList "+clientList);
+      socket.emit("CLIENT_LEFT",clientList );
+    },
+    onRefresh: function(client) {
+      console.log("refreshing client "+client.id+ " ");
+      //this.clients.set(client.id, client);
+      //clientList.push(client.id);
+      var itr = this.clients.keys();
+      
+
+      clientList = [];
+      var i=0;
+      for (var [key, value] of this.clients) {
+        //console.log(key + ' = ' + value);
+        clientList[i++] = key;
+      }
+      console.log("refreshing clientList "+clientList.length);
+      console.log("users connected "+this.clients.size);
+      client.emit("CLIENTID",client.id);
+      socket.emit("CLIENT_ADD",clientList);
+    }    
+    
+
+ };
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+const io = require('socket.io')(server);
+
+var socket = io.on('connection', client => {
+  socketUtil.onConnect(client);
+  client.on('event', data => { /* … */ 
+    console.log("on connect")
+  });
+  client.on('disconnect', () => { /* … */ 
+    socketUtil.onDisconnect(client);  });
+    
+    client.on('MOVE-SERVER', data => { /* … */ 
+      socket.emit("MOVE",data);
+      console.log("CALLING CLIENT")
+    });  
+
+    client.on('OWNER', data => { /* … */ 
+      socket.emit("OWNER",data);
+      console.log("OWNER")
+    });  
+    client.on('REFRESH', data => { /* … */ 
+      socketUtil.onRefresh(client);
+      console.log("REFRESHING")
+    });     
+});
+
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

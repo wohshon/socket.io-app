@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+#div1 {
+  width: 350px;
+  height: 70px;
+  padding: 10px;
+  border: 1px solid #aaaaaa;
+}
+</style>
+<script>
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+//  ev.dataTransfer.setData("text", ev.target.id);
+ev.dataTransfer.setData("text", ev.target.id);
+
+  console.log(ev);
+
+  track(ev);
+}
+
+function drop(ev) {
+  ev.preventDefault();
+  var data = ev.dataTransfer.getData("text");
+  console.log(data);
+  ev.target.appendChild(document.getElementById(data));
+}
+
+function track(event) {
+    for (let i=0; i<100; i++) { 
+        setTimeout(function() { 
+        //var ele = document.getElementById(ev.dataTransfer.getData("text"));   
+        console.log(event);
+        console.log(event.target.id).;
+        // /console.log(event.pageX);
+
+        console.log(event.pageY); 
+        }, 500 * i);
+        
+    } 
+}
+
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io('http://192.168.0.110:3000');
+  socket.on('connect', function(){
+    console.log("client - connect");  
+  });
+  socket.on('event', function(data){});
+  socket.on('disconnect', function(){});
+</script> 
+</head>
+<body>
+
+<p>Drag the W3Schools image into the rectangle:</p>
+
+<p draggable="true" ondragstart="event.dataTransfer.setData('text/plain', 'This text not be dragged')">
+    This text <strong>may</strong> be dragged.
+  </p>
+<div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+
+<img id="drag1" src="images/img_logo.gif" draggable="true" ondragstart="drag(event)" width="336" height="69">
+
+</body>
+</html>

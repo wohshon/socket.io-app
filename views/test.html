@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Jekyll v3.8.5">
+    <title>Starter Template · Bootstrap</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.3/examples/starter-template/">
+
+    <!-- Bootstrap core CSS -->
+<link href="css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+#dragThat,#dragThis {
+    width: 15em;
+    height: 6em;
+    padding: 0.5em;
+    border: 3px solid #ccc;
+    border-radius: 0 1em 1em 1em;
+}   
+
+ </style>
+    <!-- Custom styles for this template -->
+    <link href="css/style.css" rel="stylesheet">
+     
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+  <a class="navbar-brand" href="#">Navbar</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Link</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+        <div class="dropdown-menu" aria-labelledby="dropdown01">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+      <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
+    </form>
+  </div>
+</nav>
+
+
+  </head>
+  <body>
+    <main role="main" class="container">
+      <!--
+  <p/>
+    <div style="float:left;width:100px; height:20px;background-color: red;">
+      &nbsp;
+    </div>
+
+      <div id="dragThat" style="float:left;background-color: azure;position: relative;">
+      <ul>
+          <li id="posX1"></li>
+          <li id="posY2"></li>
+      </ul>
+  </div>
+
+  <div style="float:none;width:100px; height:100px;background-color: black;">
+    &nbsp;
+  </div>
+<p> 
+  -->
+  <div id="dragThis">
+    <ul>
+        <li id="posX"></li>
+        <li id="posY"></li>
+        <li id="owner"></li>
+    </ul>
+  </div>
+
+
+
+</main><!-- /.container -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+<script src="js/jquery-ui/jquery-ui.min.js" crossorigin="anonymous"></script>
+      <script>window.jQuery || document.write('<script src="js/jquery-3.4.1.min.js"><\/script><script src="js/jquery-ui/jquery-ui.min.js"><\/script>')</script><script src="js/bootstrap.bundle.min.js"  crossorigin="anonymous">
+     </script>
+  <script src="js/app.js" crossorigin="anonymous"></script>
+  <script>
+var socket;
+var clientId;
+
+$( document ).ready(function() {
+    console.log( "ready!" );
+    App.test("hello");
+
+    //CHANGE ME
+//    socket = io('http://192.168.0.110:3000');
+    socket = io(<%SERVER%>);
+    socket.on('connect', function(){
+        console.log("client - connect");  
+        socket.emit("REFRESH","TEST");    
+    });
+    socket.on('CLIENTID', (data) => {
+        console.log("client id " + data);
+        clientId = data;
+        //clients.set(data,data);
+//        console.log(Object.keys(data.updatedclients) + " clients");
+    });
+    socket.on('CLIENT_ADD', (data) => {
+        console.log("New client added, total "+data.length);
+        console.log(data);
+
+        //clients.set(data,data);
+        //console.log(Object.keys(data) + " clients");
+    });
+    socket.on('CLIENT_LEFT', (data) => {
+      console.log("Client left, total "+data.length);
+        console.log(data);
+        //clients.delete(data);
+        //console.log(clients.size + " clients");
+    });
+    socket.on('MOVE', (data) => {
+        console.log("triggered "+data);
+        console.log(data.clientId + ":" +clientId +" > "+(data.clientId == clientId));
+        if (data.clientId != clientId) {
+            console.log("moving...");
+             $('#dragThis').animate(data.position);
+        }
+    });
+    socket.on('OWNER', (data) => {
+        console.log("ownder "+data);
+        
+        if (data.clientId != clientId) {
+            org = $("#dragThis").position();
+
+            console.log("updating...");
+            $('#owner').text(data.clientId);
+        }
+    });    
+    socket.on('disconnect', function(){
+
+    });
+    //socket.emit("TEST","TEST");    
+});
+var org = null;
+var x =0;
+var y = 0;
+var cnt = 0;
+$('#dragThis').draggable(
+    {
+        drag: function(){
+            //var offset = $(this).offset();
+            var offset = $(this).position();
+            if (org != null) {
+              x += offset.left - org.left ;
+              y += offset.top - org.top ;
+              org = offset;
+            } else {
+              org = offset;
+            }
+            var diff = {top: y, left:x};
+            //var diff = {top: y, left:x};
+            cnt++;
+            $('#posX').text('x: ' + offset.left);
+            $('#posY').text('y: ' + offset.top);
+            $('#owner').text(clientId);
+            console.log(cnt+" top: "+y+" left: "+x);
+            if (cnt == 5) {
+              //$("#dragThat").animate(diff);
+              socket.emit("OWNER", { clientId: clientId});
+              socket.emit("MOVE-SERVER", { clientId: clientId, position: diff});
+              cnt =0;
+            }
+        }
+    });
+	</script>
+</body>
+</html>
