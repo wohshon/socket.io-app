@@ -10,10 +10,10 @@ router.get('/', function(req, res, next) {
 });
 
 /* GET home page. */
-router.get('/test', function(req, res, next) {
+router.get('/app', function(req, res, next) {
   
 //  res.render('test.html', { SERVER: 'http://192.168.0.110:8080' });
-res.render('test.html', { SERVER: process.env.SERVER });
+res.render('app.html', { SERVER: process.env.SERVER });
 });
 
 module.exports = router;

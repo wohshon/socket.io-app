@@ -94,8 +94,35 @@ var socket = io.on('connection', client => {
     client.on('REFRESH', data => { /* … */ 
       socketUtil.onRefresh(client);
       console.log("REFRESHING")
-    });     
-});
+    });
+    client.on('UPDATE_POS', data => { /* … */ 
+      socket.emit("UPDATE_POS",data);
+      console.log("UPDATE_POS")
+    });       
+
+    //--------------------------
+    client.on('event_disable_drag', data => { /* … */ 
+      console.log("DISABLE DRAG");
+      socket.emit("event_disable_drag",data);
+      
+    });       
+    client.on('event_enable_drag', data => { /* … */ 
+      console.log("ENSABLE DRAG");
+
+      socket.emit("event_enable_drag",data);
+      
+    });       
+
+    client.on("event_tracking_position", data => {
+      console.log("TRACKING");
+
+      socket.emit("event_tracking_position",data);
+
+    });
+
+    
+  
+  });
 
 
 /**

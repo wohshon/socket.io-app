@@ -151,36 +151,103 @@ $( document ).ready(function() {
     });
     socket.on('MOVE', (data) => {
         console.log("triggered "+data);
+        console.log(data);
         console.log(data.clientId + ":" +clientId +" > "+(data.clientId == clientId));
         if (data.clientId != clientId) {
+          //refresh the orginal position
+
             console.log("moving...");
-             $('#dragThis').animate(data.position);
+            //factor in resolution
+            
+            
+             //$('#dragThis').animate(data.position);
+             res = {w:$(window).width(), h: $(window).height() };
+
+             var aspectDiff=resize(data.res,res, data.position);
+             $('#dragThis').animate(aspectDiff, function(){
+              //org = null;
+              socket.emit("UPDATE_POS","test");
+             });
+
+
+            // console.log("updating...");
+            //$('#owner').text(data.clientId);             
+        } else {
+          //org = $("#dragThis").position();
         }
+    });
+    socket.on('disconnect', function(){
+
     });
     socket.on('OWNER', (data) => {
         console.log("ownder "+data);
         
         if (data.clientId != clientId) {
-            org = $("#dragThis").position();
+            //org = $("#dragThis").position();
+            //org = null;
 
             console.log("updating...");
+            ownerClientId = data.clientId;
             $('#owner').text(data.clientId);
         }
-    });    
-    socket.on('disconnect', function(){
+    });      
 
-    });
+    socket.on('UPDATE_POS', (data) => {
+        console.log("UPDATE_POS "+data);
+          org = $("#dragThis").position();
+
+
+
+    });      
+
+
+    //factor in aspect ration across different browsers
+    function resize(remote, local, diff) {
+      var waspect= remote.w / local.w;
+      var haspect= remote.h / local.h;
+
+      console.log("aspect "+waspect+":"+haspect);
+      var d_top;
+      var d_left;
+      if (haspect < 1 ) {
+        d_top = diff.top/haspect;
+      } else {
+
+        d_top = diff.top * haspect;
+      }
+      if (waspect < 1 ) {
+        d_left = diff.left/waspect
+      } else {
+        d_left = diff.left * waspect;
+      }
+
+      return {top: d_top, left: d_left}
+    }
     //socket.emit("TEST","TEST");    
+    $(window).resize(function(){
+
+      console.log("browser resize");
+      res = {w:$(window).width(), h: $(window).height() };
+
+
+    });    
 });
 var org = null;
 var x =0;
 var y = 0;
 var cnt = 0;
+var res = {w:$(window).width(), h: $(window).height() };
+var ownerClientId;
+
 $('#dragThis').draggable(
     {
         drag: function(){
+          if (clientId==ownerClientId) {
+              org = null;
+            }
             //var offset = $(this).offset();
-            var offset = $(this).position();
+            var offset = $("#dragThis").position();
+            var asepect;
             if (org != null) {
               x += offset.left - org.left ;
               y += offset.top - org.top ;
@@ -188,17 +255,24 @@ $('#dragThis').draggable(
             } else {
               org = offset;
             }
+
+
+            //get latest
+            res = {w:$(window).width(), h: $(window).height() };
             var diff = {top: y, left:x};
             //var diff = {top: y, left:x};
             cnt++;
             $('#posX').text('x: ' + offset.left);
             $('#posY').text('y: ' + offset.top);
             $('#owner').text(clientId);
+            console.log(res.w + " "+res.h)
             console.log(cnt+" top: "+y+" left: "+x);
             if (cnt == 5) {
               //$("#dragThat").animate(diff);
               socket.emit("OWNER", { clientId: clientId});
-              socket.emit("MOVE-SERVER", { clientId: clientId, position: diff});
+              //get latest
+              res = {w:$(window).width(), h: $(window).height() };
+              socket.emit("MOVE-SERVER", { clientId: clientId, position: diff, res: res});
               cnt =0;
             }
         }
