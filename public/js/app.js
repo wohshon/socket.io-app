@@ -89,12 +89,19 @@ var Main = {
             if (this.clientId != data.clientId) {
                 App.log("event_disable_drag");
                 $('#'+data.targetId).draggable('disable');
+                //$('#owner').text("disabled");
+                $('#'+data.targetId).css("background-color","grey");
+
             }
         });        
         this.server.on('event_enable_drag', (data) => {
             if (this.clientId != data.clientId) {
                 App.log("event_enable_drag");
+
                 $('#'+data.targetId).draggable('enable');
+                //$('#owner').text("enabled");
+                $('#'+data.targetId).css("background-color","white");
+
 
             }
         });        
