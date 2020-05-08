@@ -1,6 +1,11 @@
 var App = {
     log: function(msg) {
         console.log(msg);
+    },
+    init: function(drags) {
+        drags.forEach( item => {
+
+        });
     }
 } ;
 
@@ -10,8 +15,13 @@ var Main = {
     clientView:null,
     clientId: '', //clientId
     ownership: new Map(),
+    positions: new Map(),
     ownershipView: null,
     items: [],
+    originalPos: null,
+    x: 0,
+    y: 0,
+    dragCnt: 0,
     initDrag: function(drags) {
         this.items = drags;
         drags.forEach(item => {
@@ -24,21 +34,46 @@ var Main = {
                         App.log("started dragging "+targetId);
                         if (Main.ownership.get(targetId) == null) {
                             Main.ownership.set(targetId,Main.clientId);
-                            //call oter clients to do this
                             var event = {clientId: Main.clientId, targetId: targetId}
                             Main.server.emit("event_disable_drag",event );
                             App.log("called disable event "+targetId);
-                            //item.draggable.draggable({disabled: true});
                         }
                     },
                     drag: function(ev) {
-                        var targetId=ev.target.id
-                        position = $(this).position();
-                        //App.log(position);
-                        //update the rest, with timeout?
+                        
+                        var targetId=ev.target.id;
+                        var currPos = $("#"+targetId).position();
+                        App.log("drag");  
 
-                        var event = {clientId: Main.clientId, targetId: targetId, position: position }
-                        Main.server.emit("event_tracking_position", event);
+                        App.log("currPos");  
+                        App.log(currPos);                         
+                        //App.log(position);
+                        //calculate delta since last move
+                        
+                        if (Main.originalPos != null) {
+                            Main.x += currPos.left - Main.originalPos.left ;
+                            Main.y += currPos.top - Main.originalPos.top ;
+                            Main.originalPos = currPos;
+                            App.log(currPos);                         
+                            App.log(Main.originalPos);                         
+                            App.log(Main.x);                         
+                            App.log(Main.y);                         
+
+                          } else {
+                            Main.originalPos = currPos;
+                          }   
+
+                        var diff = {top: Main.y, left:Main.x};
+                        App.log("diff");  
+                        App.log(diff);  
+                        //update the rest, with timeout?
+                        Main.dragCnt++;
+
+                        if (Main.dragCnt == 8) {
+                            var event = {clientId: Main.clientId, targetId: targetId, position: diff }
+                            Main.server.emit("event_tracking_position", event);
+                            Main.dragCnt = 0;
+                        }//dragCnt                        
 
                     },
                     stop: function(ev) {
@@ -47,12 +82,10 @@ var Main = {
                         Main.ownership.delete(targetId);
                         var event = {clientId: Main.clientId, targetId: targetId}
                         App.log(Main.server);
+                        Main.originalPos = null;
                         Main.server.emit("event_enable_drag",event );
                         App.log("called enable event "+targetId);
-
-                        //after letting go, call clients to enable draggble again
-                            //item.draggable.draggable({disabled: false});
-                        }
+                    }
                 }
             );
         });//for each
@@ -89,7 +122,6 @@ var Main = {
             if (this.clientId != data.clientId) {
                 App.log("event_disable_drag");
                 $('#'+data.targetId).draggable('disable');
-                //$('#owner').text("disabled");
                 $('#'+data.targetId).css("background-color","grey");
 
             }
@@ -99,10 +131,7 @@ var Main = {
                 App.log("event_enable_drag");
 
                 $('#'+data.targetId).draggable('enable');
-                //$('#owner').text("enabled");
                 $('#'+data.targetId).css("background-color","white");
-
-
             }
         });        
         this.server.on('event_tracking_position', (data) => {
@@ -110,7 +139,9 @@ var Main = {
             if (this.clientId != data.clientId) {
                 App.log("event_tracking_position");
                 App.log("got position"+data.clientId);
-
+                var element = $('#'+data.targetId);
+                //element.animate({top: 200, left:300});
+                element.animate(data.position);
             }
         });      
     }//init
